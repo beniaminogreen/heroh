@@ -1,0 +1,54 @@
+use extendr_api::prelude::*;
+
+// use bytes::Bytes;
+// use std::path::{Path, PathBuf};
+// use tokio::signal;
+// use tokio_stream::StreamExt;
+
+use iroh::{node::Node};
+use iroh::base::node_addr::AddrInfoOptions;
+use iroh::client::docs::ShareMode;
+
+use async_std::io;
+
+#[extendr]
+fn send_to_other(name: &str, x: &[u8]) {
+    let vec_x = x.to_owned();
+
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            create_node(name, vec_x).await.unwrap();
+        });
+}
+
+async fn create_node(name: &str, x: Vec<u8>) -> anyhow::Result<()>{
+    let node = Node::memory().spawn().await?;
+
+    // Get client; create doc, ticket, and default author
+    let client = node.client();
+    let doc = client.docs.create().await?;
+
+    let ticket = doc.share(ShareMode::Write,AddrInfoOptions::Addresses).await?;
+    let author = client.authors.default().await?;
+
+    doc.set_bytes(author, name.to_string(), x).await?;
+
+    println!("to get access to this data, use {}", ticket);
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).await?;
+    println!("You entered: {}", input.trim());
+
+    Ok(())
+}
+
+// Macro to generate exports.
+// This ensures exported functions are registered with R.
+// See corresponding C code in `entrypoint.c`.
+extendr_module! {
+    mod workwme;
+    fn send_to_other;
+}

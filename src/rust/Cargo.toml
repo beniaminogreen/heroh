@@ -1,0 +1,18 @@
+[package]
+name = 'workwme'
+publish = false
+version = '0.1.0'
+edition = '2021'
+
+[lib]
+crate-type = [ 'staticlib' ]
+name = 'workwme'
+
+[dependencies]
+anyhow = "1.0.86"
+async-std = "1.12.0"
+extendr-api = {version = '*', features = ["serde"]}
+iroh = "0.17.0"
+tempdir = "0.3.7"
+tokio = "1.38.0"
+tokio-stream = "0.1.15"
